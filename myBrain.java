@@ -7,6 +7,7 @@ public class myBrain implements Brain{
     private ArrayList<Board> options;
     private ArrayList<Board.Action> firstMoves;
 
+    // This is an array that stores the parameters of the neuron.
     private double[] parameters;
 
     public myBrain(double[] parameters){
@@ -23,7 +24,7 @@ public class myBrain implements Brain{
         firstMoves = new ArrayList<>();
         enumerateOptions(currentBoard);
 
-        double best = 0;
+        double best = Double.MIN_VALUE;
         int bestIndex = 0;
 
         // Check all of the options and get the one with the highest score
@@ -36,7 +37,10 @@ public class myBrain implements Brain{
         }
 
         // We want to return the first move on the way to the best Board
+
         return firstMoves.get(bestIndex);
+
+
 
 
 
@@ -128,6 +132,7 @@ public class myBrain implements Brain{
 
 
 
+
     }
 
     /**
@@ -137,12 +142,12 @@ public class myBrain implements Brain{
      */
     private double scoreBoard(Board newBoard) {
 
-        // computing feature 1: aggregate height
+        // computing feature 1: cumulative height
 
-        int aggregateHeight = 0;
+        int cumulativeHeight = 0;
 
         for (int x = 0; x < newBoard.getWidth(); x++){
-            aggregateHeight += newBoard.getColumnHeight(x);
+            cumulativeHeight += newBoard.getColumnHeight(x);
         }
 
 
@@ -150,8 +155,27 @@ public class myBrain implements Brain{
 
         int numCompletedLines = newBoard.getRowsCleared();
 
+        // computing feature 3: number of holes.
 
-        // computing feature 3: bumpiness
+        int numHoles = 0;
+
+        for (int x = 0; x < newBoard.getWidth(); x++){
+            for (int y = 0; y < newBoard.getColumnHeight(x) - 1; y++){
+                if (newBoard.getGrid(x, y) == null){
+                    for (int yprime = y + 1; yprime < newBoard.getColumnHeight(x); yprime++){
+                        if (newBoard.getGrid(x, yprime) != null){
+                            numHoles++;
+                            break;
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        // computing feature 4: bumpiness
 
         int bumpiness = 0;
 
@@ -160,8 +184,14 @@ public class myBrain implements Brain{
         }
 
 
-        double score = parameters[0] * aggregateHeight + parameters[1] * numCompletedLines + parameters[2] * bumpiness;
 
+        // computing the score by performing a weighted average between weights and features and then adding the bias.
+        // the 0th parameter is the connection for aggregate height, the 1st is the connection for number of lines, etc.
+        double score = parameters[0] * cumulativeHeight + parameters[1] * numCompletedLines + parameters[2] * numHoles + parameters[3] * bumpiness + parameters[4];
+
+
+
+        // return 100 - (newBoard.getMaxHeight() * 5);
         return score;
     }
 }
